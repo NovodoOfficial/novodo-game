@@ -8,52 +8,10 @@
     />
     <meta name="description" content="Play minecraft 1.12 in your browser" />
     <meta name="keywords" content="eaglercraft, minecraft, 1.12, 1.12.2" />
-    <title>Home - Classroom</title>
-    <link rel="icon" href="https://classroom.novodo.co.uk/favicon.png" />
+    <title>Creeper Client</title>
     <script type="text/javascript" src="bootstrap.js"></script>
     <script type="text/javascript">
       "use strict";
-
-      var unfocusedTimer = null;
-
-      /* ---------- image visibility ---------- */
-
-      function updateImageVisibility() {
-        var container = document.getElementById("classImageContainer");
-        if (!container) return;
-
-        var windowFocused = document.hasFocus();
-        var tabFocused = document.visibilityState === "visible";
-
-        // Show image only when NOT fully focused (after delay)
-        container.style.display =
-          windowFocused && tabFocused ? "none" : "block";
-      }
-
-      /* ---------- focus state logic ---------- */
-
-      function checkFocusState() {
-        var windowFocused = document.hasFocus();
-        var tabFocused = document.visibilityState === "visible";
-
-        if (windowFocused && tabFocused) {
-          if (unfocusedTimer !== null) {
-            clearTimeout(unfocusedTimer);
-            unfocusedTimer = null;
-          }
-
-          document.title = "Home - Classroom";
-          updateImageVisibility();
-        } else {
-          if (unfocusedTimer === null) {
-            unfocusedTimer = setTimeout(function () {
-              document.title = "Home - Classroom";
-              updateImageVisibility();
-              unfocusedTimer = null;
-            }, 250);
-          }
-        }
-      }
 
       /* ---------- main loader ---------- */
 
@@ -64,24 +22,6 @@
           );
           return;
         }
-
-        /* Force title + favicon */
-
-        document.title = "Home - Classroom";
-
-        var favicon = document.querySelector("link[rel='shortcut icon']");
-        if (favicon) {
-          favicon.href =
-            "https://upload.wikimedia.org/wikipedia/commons/1/19/Google_Classroom_Logo.svg";
-        }
-
-        /* ---------- focus listeners ---------- */
-
-        window.addEventListener("focus", checkFocusState);
-        window.addEventListener("blur", checkFocusState);
-        document.addEventListener("visibilitychange", checkFocusState);
-
-        updateImageVisibility();
 
         /* ---------- launch options ---------- */
 
@@ -137,33 +77,9 @@
       background-color: black;
     "
   >
-    <div id="screen_root" style="position: relative; width: 100%; height: 100%">
-      <div
-        id="game_frame"
-        style="position: absolute; inset: 0; width: 100%; height: 100%"
-      ></div>
-
-      <div
-        id="classImageContainer"
-        style="
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          background: white;
-          overflow-y: hidden;
-          pointer-events: none;
-          z-index: 9999;
-          display: none;
-        "
-      >
-        <img
-          id="classImage"
-          src="https://classroom.novodo.co.uk/background.png"
-          style="width: 100%; height: auto; display: block; object-fit: contain"
-        />
-      </div>
-    </div>
+    <div
+      id="game_frame"
+      style="position: absolute; inset: 0; width: 100%; height: 100%"
+    ></div>
   </body>
 </html>
