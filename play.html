@@ -13,33 +13,33 @@
     <script type="text/javascript">
       "use strict";
 
-      // Lockdown check on page load
-      window.addEventListener("load", async () => {
+      const URL = "https://ld.novodo.co.uk/";
+      const POLL_INTERVAL = 3000; // 3 seconds
+      
+      async function checkLockdown() {
         try {
-          const res = await fetch("https://ld.novodo.co.uk", {
-            method: "GET",
-            cache: "no-store"
-          });
-    
-          // If request fails or isn't OK, do nothing
-          if (!res.ok) return;
-    
-          // Try parsing JSON (might fail if not JSON)
-          let data;
-          try {
-            data = await res.json();
-          } catch {
-            return; // Not JSON → do nothing
-          }
-    
-          // Check lockdown flag
-          if (data && data.lockdown === true) {
-            window.location.href = "https://classroom.google.com";
+          const res = await fetch(URL, { cache: "no-store" });
+          const data = await res.json();
+      
+          console.log("Lockdown status:", data.lockdown);
+      
+          if (data.lockdown === true) {
+            // Open Google in a new tab
+            window.open("https://www.google.com", "_blank");
+      
+            // Attempt to close current tab
+            window.close();
           }
         } catch (err) {
-          // Network error → do nothing
+          console.error("Error checking lockdown:", err);
         }
-      });
+      }
+      
+      // Run immediately on page load
+      checkLockdown();
+      
+      // Poll continuously
+      setInterval(checkLockdown, POLL_INTERVAL);
 
       /* ---------- main loader ---------- */
 
