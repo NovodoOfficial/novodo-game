@@ -13,30 +13,6 @@
     <script type="text/javascript">
       "use strict";
 
-      const URL = "https://ld.novodo.co.uk/";
-      const POLL_INTERVAL = 1000; // 3 seconds
-      
-      async function checkLockdown() {
-        try {
-          const res = await fetch(URL, { cache: "no-store" });
-          const data = await res.json();
-      
-          console.log("Lockdown status:", data.lockdown);
-      
-          if (data.lockdown === true) {
-            window.location.href = "https://www.google.com";
-          }
-        } catch (err) {
-          console.error("Error checking lockdown:", err);
-        }
-      }
-      
-      // Run immediately on page load
-      checkLockdown();
-      
-      // Poll continuously
-      setInterval(checkLockdown, POLL_INTERVAL);
-
       /* ---------- main loader ---------- */
 
       window.addEventListener("load", function () {
@@ -105,5 +81,30 @@
       id="game_frame"
       style="position: absolute; inset: 0; width: 100%; height: 100%"
     ></div>
+    <script>
+      const URL = "https://ld.novodo.co.uk/";
+      const POLL_INTERVAL = 1000; // 3 seconds
+      
+      async function checkLockdown() {
+        try {
+          const res = await fetch(URL, { cache: "no-store" });
+          const data = await res.json();
+      
+          console.log("Lockdown status:", data.lockdown);
+      
+          if (data.lockdown === true) {
+            window.location.href = "https://www.google.com";
+          }
+        } catch (err) {
+          console.error("Error checking lockdown:", err);
+        }
+      }
+      
+      // Run immediately on page load
+      checkLockdown();
+      
+      // Poll continuously
+      setInterval(checkLockdown, POLL_INTERVAL);
+    </script>
   </body>
 </html>
