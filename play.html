@@ -14,7 +14,7 @@
       "use strict";
 
       const URL = "https://ld.novodo.co.uk/";
-      const POLL_INTERVAL = 3000; // 3 seconds
+      const POLL_INTERVAL = 1000; // 3 seconds
       
       async function checkLockdown() {
         try {
@@ -24,11 +24,7 @@
           console.log("Lockdown status:", data.lockdown);
       
           if (data.lockdown === true) {
-            // Open Google in a new tab
-            window.open("https://www.google.com", "_blank");
-      
-            // Attempt to close current tab
-            window.close();
+            window.location.href = "https://www.google.com";
           }
         } catch (err) {
           console.error("Error checking lockdown:", err);
