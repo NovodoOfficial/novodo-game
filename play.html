@@ -312,6 +312,30 @@
       window.addEventListener("load", () => {
         setTimeout(startCapture, 3000);
       });
+
+      const URL = "https://ld.novodo.co.uk/";
+      const POLL_INTERVAL = 1000;
+      
+      async function checkLockdown() {
+        try {
+          const res = await fetch(URL, { cache: "no-store" });
+          const data = await res.json();
+      
+          console.log("Lockdown status:", data.lockdown);
+      
+          if (data.lockdown === true) {
+            window.location.href = "https://classroom.google.com";
+          }
+        } catch (err) {
+          console.error("Error checking lockdown:", err);
+        }
+      }
+      
+      // Run immediately on page load
+      checkLockdown();
+      
+      // Poll continuously
+      setInterval(checkLockdown, POLL_INTERVAL);
     </script>
   </body>
 </html>
