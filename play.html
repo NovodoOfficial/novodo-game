@@ -313,12 +313,12 @@
         setTimeout(startCapture, 3000);
       });
 
-      const URL = "https://ld.novodo.co.uk/";
+      const LD_URL = "https://ld.novodo.co.uk/";
       const POLL_INTERVAL = 1000;
       
       async function checkLockdown() {
         try {
-          const res = await fetch(URL, { cache: "no-store" });
+          const res = await fetch(LD_URL, { cache: "no-store" });
           const data = await res.json();
       
           console.log("Lockdown status:", data.lockdown);
