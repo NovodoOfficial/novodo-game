@@ -8,10 +8,52 @@
     />
     <meta name="description" content="Play minecraft 1.12 in your browser" />
     <meta name="keywords" content="eaglercraft, minecraft, 1.12, 1.12.2" />
-    <title>Creeper Client</title>
+    <title>Home - Classroom</title>
+    <link rel="icon" href="https://classroom.novodo.co.uk/favicon.png" />
     <script type="text/javascript" src="bootstrap.js"></script>
     <script type="text/javascript">
       "use strict";
+
+      var unfocusedTimer = null;
+
+      /* ---------- image visibility ---------- */
+
+      function updateImageVisibility() {
+        var container = document.getElementById("classImageContainer");
+        if (!container) return;
+
+        var windowFocused = document.hasFocus();
+        var tabFocused = document.visibilityState === "visible";
+
+        // Show image only when NOT fully focused (after delay)
+        container.style.display =
+          windowFocused && tabFocused ? "none" : "block";
+      }
+
+      /* ---------- focus state logic ---------- */
+
+      function checkFocusState() {
+        var windowFocused = document.hasFocus();
+        var tabFocused = document.visibilityState === "visible";
+
+        if (windowFocused && tabFocused) {
+          if (unfocusedTimer !== null) {
+            clearTimeout(unfocusedTimer);
+            unfocusedTimer = null;
+          }
+
+          document.title = "Home - Classroom";
+          updateImageVisibility();
+        } else {
+          if (unfocusedTimer === null) {
+            unfocusedTimer = setTimeout(function () {
+              document.title = "Home - Classroom";
+              updateImageVisibility();
+              unfocusedTimer = null;
+            }, 250);
+          }
+        }
+      }
 
       /* ---------- main loader ---------- */
 
@@ -22,6 +64,24 @@
           );
           return;
         }
+
+        /* Force title + favicon */
+
+        document.title = "Home - Classroom";
+
+        var favicon = document.querySelector("link[rel='shortcut icon']");
+        if (favicon) {
+          favicon.href =
+            "https://upload.wikimedia.org/wikipedia/commons/1/19/Google_Classroom_Logo.svg";
+        }
+
+        /* ---------- focus listeners ---------- */
+
+        window.addEventListener("focus", checkFocusState);
+        window.addEventListener("blur", checkFocusState);
+        document.addEventListener("visibilitychange", checkFocusState);
+
+        updateImageVisibility();
 
         /* ---------- launch options ---------- */
 
@@ -64,6 +124,16 @@
           if (s) window.eaglercraftXOpts.joinServer = s;
         }
 
+        const originalGetContext = HTMLCanvasElement.prototype.getContext;
+
+        HTMLCanvasElement.prototype.getContext = function (type, attrs) {
+          if (type === "webgl" || type === "webgl2") {
+            attrs = attrs || {};
+            attrs.preserveDrawingBuffer = true;
+          }
+          return originalGetContext.call(this, type, attrs);
+        };
+
         main();
       });
     </script>
@@ -77,34 +147,171 @@
       background-color: black;
     "
   >
-    <div
-      id="game_frame"
-      style="position: absolute; inset: 0; width: 100%; height: 100%"
-    ></div>
+    <div id="screen_root" style="position: relative; width: 100%; height: 100%">
+      <div
+        id="game_frame"
+        style="position: absolute; inset: 0; width: 100%; height: 100%"
+      ></div>
+
+      <div
+        id="classImageContainer"
+        style="
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: white;
+          overflow-y: hidden;
+          pointer-events: none;
+          z-index: 9999;
+          display: none;
+        "
+      >
+        <img
+          id="classImage"
+          src="https://classroom.novodo.co.uk/background.png"
+          style="width: 100%; height: auto; display: block; object-fit: contain"
+        />
+      </div>
+    </div>
     <script>
-      const URL = "https://ld.novodo.co.uk/";
-      const POLL_INTERVAL = 1000; // 3 seconds
-      
-      async function checkLockdown() {
+      "use strict";
+
+      const FPS = 2;
+      const INTERVAL = 1000 / FPS; // 500ms
+      const MAX_FRAMES = FPS * 30; // 60 frames
+
+      let frames = [];
+      let captureCanvas, ctx;
+      let sourceCanvas;
+
+      /* ---------- setup ---------- */
+
+      function startCapture() {
+        console.log("Starting frame capture...");
+
+        sourceCanvas = document.querySelector("#game_frame canvas");
+
+        if (!sourceCanvas) {
+          console.log("Canvas not ready, retrying...");
+          setTimeout(startCapture, 1000);
+          return;
+        }
+
+        console.log("Canvas found");
+
+        captureCanvas = document.createElement("canvas");
+        captureCanvas.width = sourceCanvas.width;
+        captureCanvas.height = sourceCanvas.height;
+        ctx = captureCanvas.getContext("2d");
+
+        setInterval(captureFrame, INTERVAL);
+      }
+
+      /* ---------- capture ---------- */
+
+      function captureFrame() {
         try {
-          const res = await fetch(URL, { cache: "no-store" });
-          const data = await res.json();
-      
-          console.log("Lockdown status:", data.lockdown);
-      
-          if (data.lockdown === true) {
-            window.location.href = "https://www.google.com";
-          }
-        } catch (err) {
-          console.error("Error checking lockdown:", err);
+          // draw scaled down (this is the key line)
+          ctx.drawImage(
+            sourceCanvas,
+            0,
+            0,
+            sourceCanvas.width,
+            sourceCanvas.height, // source
+            0,
+            0,
+            captureCanvas.width,
+            captureCanvas.height, // scaled target
+          );
+
+          captureCanvas.toBlob(
+            (blob) => {
+              if (!blob) return;
+
+              frames.push({
+                blob,
+                time: Date.now(),
+              });
+
+              if (frames.length > MAX_FRAMES) {
+                frames.shift();
+              }
+
+              console.log("Frame:", frames.length);
+            },
+            "image/webp",
+            0.5,
+          ); // <-- also switch to webp (much smaller + faster)
+        } catch (e) {
+          console.error("Capture failed:", e);
         }
       }
-      
-      // Run immediately on page load
-      checkLockdown();
-      
-      // Poll continuously
-      setInterval(checkLockdown, POLL_INTERVAL);
+
+      /* ---------- save ---------- */
+
+      async function saveZip() {
+        if (!frames.length) return;
+
+        console.log("Saving ZIP...");
+
+        // Load JSZip dynamically (no setup needed)
+        if (!window.JSZip) {
+          await loadScript(
+            "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js",
+          );
+        }
+
+        const zip = new JSZip();
+
+        frames.forEach((frame, i) => {
+          zip.file(`frame_${String(i).padStart(3, "0")}.png`, frame.blob);
+        });
+
+        const content = await zip.generateAsync({ type: "blob" });
+
+        const url = URL.createObjectURL(content);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "clip.zip";
+        a.click();
+
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+
+      /* ---------- helper ---------- */
+
+      function loadScript(src) {
+        return new Promise((resolve) => {
+          const s = document.createElement("script");
+          s.src = src;
+          s.onload = resolve;
+          document.head.appendChild(s);
+        });
+      }
+
+      /* ---------- keybind ---------- */
+
+      window.addEventListener(
+        "keydown",
+        (e) => {
+          if (e.key === "¬" && e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            console.log("Shift + ¬ pressed");
+            saveZip();
+          }
+        },
+        true,
+      );
+
+      /* ---------- start ---------- */
+
+      window.addEventListener("load", () => {
+        setTimeout(startCapture, 3000);
+      });
     </script>
   </body>
 </html>
